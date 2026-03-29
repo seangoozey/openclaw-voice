@@ -47,8 +47,16 @@ class Settings(BaseSettings):
     stt_device: str = "auto"  # auto, cpu, cuda, mps
     
     # TTS
+    tts_backend: Optional[str] = None  # openai, elevenlabs, chatterbox, xtts, mock
     tts_model: str = "chatterbox"
     tts_voice: Optional[str] = None  # Path to voice sample for cloning
+    tts_voice_id: Optional[str] = None  # ElevenLabs voice ID
+    tts_api_base_url: Optional[str] = None  # OpenAI-compatible speech endpoint base URL
+    tts_api_key: Optional[str] = None
+    tts_api_model: str = "gpt-4o-mini-tts"
+    tts_api_voice: str = "alloy"
+    tts_response_format: str = "pcm"
+    tts_sample_rate: int = 24000
     
     # AI Backend
     backend_type: str = "openai"  # openai, openclaw, custom
@@ -103,6 +111,14 @@ async def startup():
     logger.info(f"Loading TTS model: {settings.tts_model}")
     tts = ChatterboxTTS(
         voice_sample=settings.tts_voice,
+        voice_id=settings.tts_voice_id,
+        backend=settings.tts_backend,
+        api_key=settings.tts_api_key,
+        base_url=settings.tts_api_base_url,
+        model=settings.tts_api_model,
+        voice=settings.tts_api_voice,
+        response_format=settings.tts_response_format,
+        sample_rate=settings.tts_sample_rate,
     )
     
     # Initialize AI backend
@@ -320,7 +336,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                                 await websocket.send_json({
                                                     "type": "audio_chunk",
                                                     "data": audio_b64,
-                                                    "sample_rate": 24000,
+                                                    "sample_rate": tts.sample_rate,
                                                 })
                                 else:
                                     break
@@ -334,7 +350,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                     await websocket.send_json({
                                         "type": "audio_chunk",
                                         "data": audio_b64,
-                                        "sample_rate": 24000,
+                                        "sample_rate": tts.sample_rate,
                                     })
                         
                         # Signal end of response

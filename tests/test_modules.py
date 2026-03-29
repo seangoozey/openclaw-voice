@@ -7,6 +7,7 @@ import numpy as np
 import asyncio
 import os
 import sys
+import types
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -62,6 +63,26 @@ class TestChatterboxTTS:
         assert isinstance(result, np.ndarray)
         assert result.dtype == np.float32
         assert len(result) > 0
+
+    def test_init_uses_openai_compatible_backend_when_configured(self, monkeypatch):
+        """Test OpenAI-compatible TTS initialization without a real server."""
+
+        class FakeAsyncOpenAI:
+            def __init__(self, api_key=None, base_url=None):
+                self.api_key = api_key
+                self.base_url = base_url
+
+        monkeypatch.setenv("OPENCLAW_TTS_BACKEND", "openai")
+        monkeypatch.setenv("OPENCLAW_TTS_API_BASE_URL", "http://localhost:8000/v1")
+        monkeypatch.setenv("OPENCLAW_TTS_API_MODEL", "qwen-tts")
+        monkeypatch.setitem(sys.modules, "openai", types.SimpleNamespace(AsyncOpenAI=FakeAsyncOpenAI))
+
+        tts = ChatterboxTTS()
+
+        assert tts._backend == "openai"
+        assert tts._openai_client is not None
+        assert tts._tts_model == "qwen-tts"
+        assert tts._tts_base_url == "http://localhost:8000/v1"
 
 
 class TestAIBackend:

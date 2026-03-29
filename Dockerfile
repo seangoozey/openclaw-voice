@@ -5,6 +5,7 @@ FROM nvidia/cuda:12.1-cudnn8-runtime-ubuntu22.04
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
 
 # Install Python and dependencies
 RUN apt-get update && apt-get install -y \
@@ -28,14 +29,16 @@ WORKDIR /app
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# Copy requirements first for caching
-COPY requirements.txt pyproject.toml ./
+# Copy dependency manifests first for caching
+COPY requirements.txt pyproject.toml README.md ./
 
-# Create venv and install dependencies
+# Create venv and install dependencies.
+# Use requirements.txt here instead of editable package install because the repo
+# is not packaged as a standard installable src-layout project.
 RUN uv venv && \
     . .venv/bin/activate && \
-    uv pip install -e ".[stt]" && \
-    uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+    uv pip install -r requirements.txt && \
+    uv pip install --upgrade torch torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Copy application code
 COPY src/ ./src/
@@ -49,7 +52,7 @@ ENV OPENCLAW_HOST=0.0.0.0
 ENV OPENCLAW_PORT=8765
 ENV OPENCLAW_STT_MODEL=large-v3-turbo
 ENV OPENCLAW_STT_DEVICE=cuda
-ENV OPENCLAW_REQUIRE_AUTH=true
+ENV OPENCLAW_REQUIRE_AUTH=false
 
 # Expose port
 EXPOSE 8765

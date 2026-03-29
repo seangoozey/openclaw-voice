@@ -17,13 +17,7 @@ services:
       # Persist downloaded models
       - whisper-models:/root/.cache/huggingface
       - ./voices:/app/voices
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    gpus: all
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8765/"]

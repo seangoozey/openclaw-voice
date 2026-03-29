@@ -14,7 +14,7 @@ Talk to your AI like you talk to Alexa — but self-hosted, private, and connect
 | Feature | Description |
 |---------|-------------|
 | 🎤 **Local STT** | Whisper runs locally via faster-whisper. Your voice never leaves your machine. |
-| 🔊 **Streaming TTS** | ElevenLabs with sentence-by-sentence streaming. Hear responses while they generate. |
+| 🔊 **Streaming TTS** | ElevenLabs or OpenAI-compatible TTS with sentence-by-sentence streaming. Hear responses while they generate. |
 | 🎯 **Voice Activity Detection** | Silero VAD filters background noise. Works in noisy environments. |
 | 🧹 **Smart Text Cleaning** | Strips markdown, hashtags, URLs before TTS. No more "hash hash". |
 | 🔌 **Any AI Backend** | OpenAI, Claude, or full OpenClaw agent with memory and tools. |
@@ -66,8 +66,15 @@ PYTHONPATH=. ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY" OPENAI_API_KEY="$OPENAI_AP
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
+| `OPENCLAW_TTS_BACKEND` | No | auto | Force TTS backend: `openai`, `elevenlabs`, `chatterbox`, `xtts`, `mock` |
+| `OPENCLAW_TTS_API_BASE_URL` | Yes** | — | Base URL for self-hosted OpenAI-compatible TTS, e.g. `http://localhost:8000/v1` |
+| `OPENCLAW_TTS_API_KEY` | No | — | API key for self-hosted OpenAI-compatible TTS |
+| `OPENCLAW_TTS_API_MODEL` | No | `gpt-4o-mini-tts` | TTS model name, e.g. `qwen-tts` |
+| `OPENCLAW_TTS_API_VOICE` | No | `alloy` | Voice name sent to the OpenAI-compatible speech endpoint |
+| `OPENCLAW_TTS_RESPONSE_FORMAT` | No | `pcm` | Audio format requested from the TTS server |
+| `OPENCLAW_TTS_SAMPLE_RATE` | No | `24000` | Sample rate advertised to the browser for TTS audio |
 | `ELEVENLABS_API_KEY` | Yes* | — | ElevenLabs API key for TTS |
-| `OPENAI_API_KEY` | Yes* | — | OpenAI API key (if not using gateway) |
+| `OPENAI_API_KEY` | Yes* | — | OpenAI API key for chat backend (if not using gateway) |
 | `OPENCLAW_GATEWAY_URL` | No | — | OpenClaw gateway URL for full agent |
 | `OPENCLAW_GATEWAY_TOKEN` | No | — | Gateway auth token |
 | `OPENCLAW_PORT` | No | `8765` | Server port |
@@ -75,7 +82,9 @@ PYTHONPATH=. ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY" OPENAI_API_KEY="$OPENAI_AP
 | `OPENCLAW_STT_DEVICE` | No | `auto` | Device: `auto`, `cpu`, `cuda`, `mps` |
 | `OPENCLAW_REQUIRE_AUTH` | No | `false` | Require API keys for clients |
 
-*One of `OPENAI_API_KEY` or `OPENCLAW_GATEWAY_URL` required.
+*One of `OPENAI_API_KEY` or `OPENCLAW_GATEWAY_URL` required for chat.
+
+**Required only when using `OPENCLAW_TTS_BACKEND=openai` or when you want the OpenAI-compatible TTS backend auto-detected.
 
 ### Whisper Model Sizes
 
@@ -91,12 +100,30 @@ PYTHONPATH=. ELEVENLABS_API_KEY="$ELEVENLABS_API_KEY" OPENAI_API_KEY="$OPENAI_AP
 
 | Backend | Type | Quality | Latency | Notes |
 |---------|------|---------|---------|-------|
+| **OpenAI-compatible** | Self-hosted / cloud | Depends on model | Low | Works with servers exposing `/audio/speech`, including `qwen-tts`. |
 | **ElevenLabs** | Cloud | Excellent | ~500ms | Default. Streaming supported. |
 | Chatterbox | Local | Very Good | ~1s | MIT license, voice cloning |
 | XTTS-v2 | Local | Excellent | ~1s | Voice cloning supported |
 | Mock | Local | None | 0ms | For testing (silence) |
 
-ElevenLabs uses `eleven_turbo_v2_5` for fastest response.
+ElevenLabs uses `eleven_turbo_v2_5` for fastest response. OpenAI-compatible TTS uses the standard speech endpoint and streams bytes directly when the upstream server supports chunked audio responses.
+
+### Using Self-Hosted `qwen-tts`
+
+If your TTS server is OpenAI API compatible, point OpenClaw Voice at that speech endpoint:
+
+```bash
+# .env
+OPENCLAW_TTS_BACKEND=openai
+OPENCLAW_TTS_API_BASE_URL=http://localhost:8000/v1
+OPENCLAW_TTS_API_KEY=local-key
+OPENCLAW_TTS_API_MODEL=qwen-tts
+OPENCLAW_TTS_API_VOICE=Chelsie
+OPENCLAW_TTS_RESPONSE_FORMAT=pcm
+OPENCLAW_TTS_SAMPLE_RATE=24000
+```
+
+This integration expects the upstream server to implement `POST /audio/speech` with OpenAI-compatible request fields (`model`, `voice`, `input`, `response_format`). If your `qwen-tts` deployment uses a different sample rate, set `OPENCLAW_TTS_SAMPLE_RATE` to match it so the browser plays audio correctly.
 
 ## OpenClaw Gateway Integration
 
