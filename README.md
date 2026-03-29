@@ -1,3 +1,7 @@
+Manual Fork
+Use Purple Horizon's version:
+https://github.com/Purple-Horizons/openclaw-voice.git
+
 # OpenClaw Voice
 
 **Open-source browser-based voice interface for AI assistants.**
