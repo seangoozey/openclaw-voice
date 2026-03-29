@@ -19,8 +19,16 @@ RUN apt-get update && apt-get install -y \
     python3.11-venv \
     python3-pip \
     build-essential \
+    pkg-config \
     ffmpeg \
+    libavcodec-dev \
+    libavdevice-dev \
+    libavfilter-dev \
+    libavformat-dev \
+    libavutil-dev \
     libsndfile1 \
+    libswresample-dev \
+    libswscale-dev \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
