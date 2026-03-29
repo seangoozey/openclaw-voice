@@ -5,6 +5,8 @@ ARG CUDA_BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 FROM ${CUDA_BASE_IMAGE}
 
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu121
+ARG TORCH_VERSION=
+ARG TORCHAUDIO_VERSION=
 ARG FASTER_WHISPER_VERSION=
 ARG CTRANSLATE2_VERSION=
 
@@ -52,7 +54,11 @@ COPY requirements.txt pyproject.toml README.md ./
 RUN uv venv && \
     . .venv/bin/activate && \
     uv pip install -r requirements.txt && \
-    uv pip install --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL} && \
+    if [ -n "${TORCH_VERSION}" ] && [ -n "${TORCHAUDIO_VERSION}" ]; then \
+        uv pip install --upgrade "torch==${TORCH_VERSION}" "torchaudio==${TORCHAUDIO_VERSION}" --index-url ${TORCH_INDEX_URL}; \
+    else \
+        uv pip install --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
+    fi && \
     if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
     if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi
 
