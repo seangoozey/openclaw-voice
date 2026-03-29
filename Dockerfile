@@ -25,9 +25,8 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
 # Create app directory
 WORKDIR /app
 
-# Install uv for fast package management
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+# Install uv into a standard system path so later layers can invoke it reliably.
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 # Copy dependency manifests first for caching
 COPY requirements.txt pyproject.toml README.md ./
