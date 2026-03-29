@@ -1,7 +1,12 @@
 # OpenClaw Voice - GPU-enabled Docker image
 # Supports NVIDIA GPUs for fast Whisper + TTS inference
 
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+ARG CUDA_BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM ${CUDA_BASE_IMAGE}
+
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu121
+ARG FASTER_WHISPER_VERSION=
+ARG CTRANSLATE2_VERSION=
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -39,7 +44,9 @@ COPY requirements.txt pyproject.toml README.md ./
 RUN uv venv && \
     . .venv/bin/activate && \
     uv pip install -r requirements.txt && \
-    uv pip install --upgrade torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+    uv pip install --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL} && \
+    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
+    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi
 
 # Copy application code
 COPY src/ ./src/

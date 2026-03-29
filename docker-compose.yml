@@ -2,7 +2,13 @@ version: '3.8'
 
 services:
   openclaw-voice:
-    build: .
+    build:
+      context: .
+      args:
+        CUDA_BASE_IMAGE: ${OPENCLAW_CUDA_BASE_IMAGE:-nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04}
+        TORCH_INDEX_URL: ${OPENCLAW_TORCH_INDEX_URL:-https://download.pytorch.org/whl/cu121}
+        FASTER_WHISPER_VERSION: ${OPENCLAW_FASTER_WHISPER_VERSION:-}
+        CTRANSLATE2_VERSION: ${OPENCLAW_CTRANSLATE2_VERSION:-}
     ports:
       - "8765:8765"
     environment:
@@ -13,6 +19,15 @@ services:
       - OPENCLAW_REQUIRE_AUTH=${OPENCLAW_REQUIRE_AUTH:-false}
       - OPENCLAW_MASTER_KEY=${OPENCLAW_MASTER_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - OPENCLAW_TTS_BACKEND=${OPENCLAW_TTS_BACKEND:-}
+      - OPENCLAW_TTS_API_BASE_URL=${OPENCLAW_TTS_API_BASE_URL:-}
+      - OPENCLAW_TTS_API_KEY=${OPENCLAW_TTS_API_KEY:-}
+      - OPENCLAW_TTS_API_MODEL=${OPENCLAW_TTS_API_MODEL:-}
+      - OPENCLAW_TTS_API_VOICE=${OPENCLAW_TTS_API_VOICE:-}
+      - OPENCLAW_TTS_RESPONSE_FORMAT=${OPENCLAW_TTS_RESPONSE_FORMAT:-}
+      - OPENCLAW_TTS_VOICE_ID=${OPENCLAW_TTS_VOICE_ID:-}
     volumes:
       # Persist downloaded models
       - whisper-models:/root/.cache/huggingface
@@ -28,7 +43,13 @@ services:
 
   # CPU-only version (no GPU required)
   openclaw-voice-cpu:
-    build: .
+    build:
+      context: .
+      args:
+        CUDA_BASE_IMAGE: ${OPENCLAW_CUDA_BASE_IMAGE:-nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04}
+        TORCH_INDEX_URL: ${OPENCLAW_TORCH_INDEX_URL:-https://download.pytorch.org/whl/cu121}
+        FASTER_WHISPER_VERSION: ${OPENCLAW_FASTER_WHISPER_VERSION:-}
+        CTRANSLATE2_VERSION: ${OPENCLAW_CTRANSLATE2_VERSION:-}
     ports:
       - "8766:8765"
     environment:
@@ -39,6 +60,15 @@ services:
       - OPENCLAW_REQUIRE_AUTH=${OPENCLAW_REQUIRE_AUTH:-false}
       - OPENCLAW_MASTER_KEY=${OPENCLAW_MASTER_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - OPENCLAW_TTS_BACKEND=${OPENCLAW_TTS_BACKEND:-}
+      - OPENCLAW_TTS_API_BASE_URL=${OPENCLAW_TTS_API_BASE_URL:-}
+      - OPENCLAW_TTS_API_KEY=${OPENCLAW_TTS_API_KEY:-}
+      - OPENCLAW_TTS_API_MODEL=${OPENCLAW_TTS_API_MODEL:-}
+      - OPENCLAW_TTS_API_VOICE=${OPENCLAW_TTS_API_VOICE:-}
+      - OPENCLAW_TTS_RESPONSE_FORMAT=${OPENCLAW_TTS_RESPONSE_FORMAT:-}
+      - OPENCLAW_TTS_VOICE_ID=${OPENCLAW_TTS_VOICE_ID:-}
     volumes:
       - whisper-models:/root/.cache/huggingface
       - ./voices:/app/voices
