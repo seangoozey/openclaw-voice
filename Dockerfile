@@ -1,7 +1,7 @@
 # OpenClaw Voice - GPU-enabled Docker image
 # Supports NVIDIA GPUs for fast Whisper + TTS inference
 
-FROM nvidia/cuda:12.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
