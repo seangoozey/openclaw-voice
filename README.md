@@ -1,4 +1,4 @@
-Manual Fork
+Manual Fork:
 Use Purple Horizon's version:
 https://github.com/Purple-Horizons/openclaw-voice.git
 
