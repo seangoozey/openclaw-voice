@@ -14,7 +14,7 @@ webrtcvad>=2.0.10
 
 # Speech-to-Text
 openai-whisper>=20231117
-faster-whisper==0.10.0
+faster-whisper==0.9.0
 # whisper.cpp via ctypes (optional, for CPU)
 
 # Text-to-Speech
