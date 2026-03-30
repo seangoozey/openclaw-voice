@@ -27,6 +27,7 @@ services:
     volumes:
       # Persist downloaded models
       - whisper-models:/root/.cache/huggingface
+      - whisper-cache:/root/.cache/whisper
       - ./voices:/app/voices
     gpus: all
     restart: unless-stopped
@@ -65,6 +66,7 @@ services:
       - OPENCLAW_TTS_VOICE_ID=${OPENCLAW_TTS_VOICE_ID:-}
     volumes:
       - whisper-models:/root/.cache/huggingface
+      - whisper-cache:/root/.cache/whisper
       - ./voices:/app/voices
     profiles:
       - cpu
@@ -72,3 +74,4 @@ services:
 
 volumes:
   whisper-models:
+  whisper-cache:
