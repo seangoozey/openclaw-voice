@@ -32,8 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 stt = [
-    "faster-whisper==0.9.0",
-    "ctranslate2==3.24.0",
+    "openai-whisper>=20231117",
 ]
 tts = [
     "torch==2.0.1",

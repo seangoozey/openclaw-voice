@@ -51,9 +51,6 @@ RUN uv venv && \
         "torch==2.0.1" \
         "torchaudio==2.0.2" \
         --index-url https://download.pytorch.org/whl/cu118 && \
-    uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps \
-        "faster-whisper==0.9.0" \
-        "ctranslate2==3.24.0" && \
     uv pip install --upgrade "numpy<2"
 
 # Copy application code
