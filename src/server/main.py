@@ -21,6 +21,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from loguru import logger
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
 from .stt import WhisperSTT
@@ -78,12 +79,41 @@ class Settings(BaseSettings):
 
 settings = Settings()
 app = FastAPI(title="OpenClaw Voice", version="0.1.0")
+VAD_CONFIG_PATH = Path("/app/config/vad_settings.json")
 
 # Global instances (initialized on startup)
 stt: Optional[WhisperSTT] = None
 tts: Optional[ChatterboxTTS] = None
 backend: Optional[AIBackend] = None
 vad: Optional[VoiceActivityDetector] = None
+
+
+class VADConfig(BaseModel):
+    server_threshold: float = 0.5
+    client_energy_threshold: float = 0.01
+    client_silence_ms: int = 1500
+
+
+def save_vad_config(config: VADConfig):
+    """Persist VAD config to disk."""
+    VAD_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    VAD_CONFIG_PATH.write_text(config.model_dump_json(indent=2), encoding="utf-8")
+
+
+def load_vad_config() -> VADConfig:
+    """Load VAD config from disk, creating defaults if needed."""
+    if not VAD_CONFIG_PATH.exists():
+        default_config = VADConfig()
+        save_vad_config(default_config)
+        return default_config
+
+    try:
+        return VADConfig.model_validate_json(VAD_CONFIG_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning(f"Failed to load VAD config, using defaults: {e}")
+        default_config = VADConfig()
+        save_vad_config(default_config)
+        return default_config
 
 
 @app.on_event("startup")
@@ -157,7 +187,8 @@ async def startup():
     
     # Initialize VAD
     logger.info("Loading VAD model")
-    vad = VoiceActivityDetector()
+    vad_config = load_vad_config()
+    vad = VoiceActivityDetector(threshold=vad_config.server_threshold)
     
     logger.info("✅ OpenClaw Voice server ready!")
 
@@ -230,6 +261,23 @@ async def get_usage(api_key: str):
         return {"error": "Invalid API key"}
     
     return token_manager.get_usage(key)
+
+
+@app.get("/api/vad-config")
+async def get_vad_config():
+    """Return persisted VAD settings for the client and server."""
+    return load_vad_config().model_dump()
+
+
+@app.put("/api/vad-config")
+async def update_vad_config(config: VADConfig):
+    """Update VAD settings and apply them live."""
+    global vad
+
+    save_vad_config(config)
+    if vad:
+        vad.update_threshold(config.server_threshold)
+    return config.model_dump()
 
 
 @app.websocket("/ws")

@@ -1,0 +1,5 @@
+{
+  "server_threshold": 0.5,
+  "client_energy_threshold": 0.01,
+  "client_silence_ms": 1500
+}

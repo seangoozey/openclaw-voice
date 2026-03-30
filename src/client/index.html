@@ -231,6 +231,51 @@
             border-color: #ff6b35;
             color: #ff6b35;
         }
+
+        .settings-panel {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid #333;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+        }
+
+        .settings-panel h3 {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .setting-row {
+            display: grid;
+            grid-template-columns: 1fr 110px;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .setting-row label {
+            color: #ccc;
+            font-size: 0.95rem;
+        }
+
+        .setting-row input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+        }
+
+        .setting-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
         
         .error {
             color: #ff4444;
@@ -282,6 +327,26 @@
         <div class="controls">
             <button id="clearBtn">Clear History</button>
         </div>
+
+        <div class="settings-panel">
+            <h3>VAD Settings</h3>
+            <div class="setting-row">
+                <label for="serverVadThreshold">Server speech threshold</label>
+                <input type="number" id="serverVadThreshold" min="0" max="1" step="0.01">
+            </div>
+            <div class="setting-row">
+                <label for="clientEnergyThreshold">Client energy threshold</label>
+                <input type="number" id="clientEnergyThreshold" min="0" max="1" step="0.001">
+            </div>
+            <div class="setting-row">
+                <label for="clientSilenceMs">Client silence timeout (ms)</label>
+                <input type="number" id="clientSilenceMs" min="100" max="10000" step="100">
+            </div>
+            <div class="setting-actions">
+                <button id="saveVadBtn">Save VAD</button>
+                <button id="reloadVadBtn">Reload VAD</button>
+            </div>
+        </div>
         
         <p class="error" id="error"></p>
         
@@ -304,6 +369,11 @@
         const errorEl = document.getElementById('error');
         const clearBtn = document.getElementById('clearBtn');
         const continuousModeToggle = document.getElementById('continuousMode');
+        const serverVadThresholdInput = document.getElementById('serverVadThreshold');
+        const clientEnergyThresholdInput = document.getElementById('clientEnergyThreshold');
+        const clientSilenceMsInput = document.getElementById('clientSilenceMs');
+        const saveVadBtn = document.getElementById('saveVadBtn');
+        const reloadVadBtn = document.getElementById('reloadVadBtn');
         
         let ws = null;
         let mediaRecorder = null;
@@ -315,11 +385,53 @@
         let continuousMode = false;
         let silenceTimer = null;
         let silenceThreshold = 1500; // ms of silence before stopping
+        let energyThreshold = 0.01;
         
         // Get API key from URL params or localStorage
         function getApiKey() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('api_key') || localStorage.getItem('openclaw_api_key') || '';
+        }
+
+        function applyVadConfig(config) {
+            serverVadThresholdInput.value = config.server_threshold;
+            clientEnergyThresholdInput.value = config.client_energy_threshold;
+            clientSilenceMsInput.value = config.client_silence_ms;
+            energyThreshold = config.client_energy_threshold;
+            silenceThreshold = config.client_silence_ms;
+        }
+
+        async function loadVadConfig() {
+            try {
+                const response = await fetch('/api/vad-config');
+                if (!response.ok) throw new Error(`Failed to load VAD config: ${response.status}`);
+                const config = await response.json();
+                applyVadConfig(config);
+            } catch (err) {
+                errorEl.textContent = `VAD config error: ${err.message}`;
+            }
+        }
+
+        async function saveVadConfig() {
+            const payload = {
+                server_threshold: parseFloat(serverVadThresholdInput.value || '0.5'),
+                client_energy_threshold: parseFloat(clientEnergyThresholdInput.value || '0.01'),
+                client_silence_ms: parseInt(clientSilenceMsInput.value || '1500', 10),
+            };
+
+            try {
+                const response = await fetch('/api/vad-config', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) throw new Error(`Failed to save VAD config: ${response.status}`);
+                const config = await response.json();
+                applyVadConfig(config);
+                setStatus('VAD settings saved', true);
+            } catch (err) {
+                errorEl.textContent = `VAD save error: ${err.message}`;
+            }
         }
         
         // Connect to WebSocket
@@ -623,7 +735,7 @@
                         // Simple VAD: check if audio has energy
                         if (continuousMode) {
                             const energy = audioData.reduce((sum, val) => sum + Math.abs(val), 0) / audioData.length;
-                            if (energy > 0.01) {
+                            if (energy > energyThreshold) {
                                 lastSoundTime = Date.now();
                             } else if (Date.now() - lastSoundTime > silenceThreshold) {
                                 // Silence detected - stop recording
@@ -764,6 +876,14 @@
         clearBtn.addEventListener('click', () => {
             transcriptEl.innerHTML = '';
         });
+
+        saveVadBtn.addEventListener('click', () => {
+            saveVadConfig();
+        });
+
+        reloadVadBtn.addEventListener('click', () => {
+            loadVadConfig();
+        });
         
         // Continuous mode toggle
         continuousModeToggle.addEventListener('change', (e) => {
@@ -787,6 +907,7 @@
         });
         
         // Connect on load
+        loadVadConfig();
         connect();
         
         // Keep connection alive

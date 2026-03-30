@@ -28,6 +28,8 @@ services:
       # Persist downloaded models
       - whisper-models:/root/.cache/huggingface
       - whisper-cache:/root/.cache/whisper
+      - torch-cache:/root/.cache/torch
+      - ./config:/app/config
       - ./voices:/app/voices
     gpus: all
     restart: unless-stopped
@@ -67,6 +69,8 @@ services:
     volumes:
       - whisper-models:/root/.cache/huggingface
       - whisper-cache:/root/.cache/whisper
+      - torch-cache:/root/.cache/torch
+      - ./config:/app/config
       - ./voices:/app/voices
     profiles:
       - cpu
@@ -75,3 +79,4 @@ services:
 volumes:
   whisper-models:
   whisper-cache:
+  torch-cache:

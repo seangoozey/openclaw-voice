@@ -14,6 +14,10 @@ class VoiceActivityDetector:
         self.model = None
         self._load_model()
 
+    def update_threshold(self, threshold: float):
+        """Update the speech detection threshold at runtime."""
+        self.threshold = threshold
+
     def _load_model(self):
         """Load VAD model."""
         try:
