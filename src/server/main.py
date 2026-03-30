@@ -128,10 +128,14 @@ async def startup():
     
     if gateway_url and gateway_token:
         # Use OpenClaw gateway (connects to Aria!)
-        logger.info(f"🦞 Connecting to OpenClaw gateway: {gateway_url}")
+        gateway_base_url = gateway_url.rstrip("/")
+        if not gateway_base_url.endswith("/v1"):
+            gateway_base_url = f"{gateway_base_url}/v1"
+
+        logger.info(f"🦞 Connecting to OpenClaw gateway: {gateway_base_url}")
         backend = AIBackend(
             backend_type="openai",  # Gateway speaks OpenAI API
-            url=f"{gateway_url}/v1",
+            url=gateway_base_url,
             model="openclaw:voice",  # Maps to 'voice' agent in config
             api_key=gateway_token,
             system_prompt=(
