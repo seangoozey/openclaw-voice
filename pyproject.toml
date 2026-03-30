@@ -32,11 +32,12 @@ dependencies = [
 
 [project.optional-dependencies]
 stt = [
-    "faster-whisper>=1.0.0",
+    "faster-whisper==0.10.0",
+    "ctranslate2==3.24.0",
 ]
 tts = [
-    "torch>=2.1.0",
-    "torchaudio>=2.1.0",
+    "torch==2.0.1",
+    "torchaudio==2.0.2",
 ]
 all = [
     "openclaw-voice[stt,tts]",

@@ -14,14 +14,15 @@ webrtcvad>=2.0.10
 
 # Speech-to-Text
 openai-whisper>=20231117
-faster-whisper>=1.0.0
+faster-whisper==0.10.0
 # whisper.cpp via ctypes (optional, for CPU)
 
 # Text-to-Speech
 # chatterbox-tts  # Install from source for now
-torch>=2.1.0
-torchaudio>=2.1.0
-transformers>=4.36.0
+torch==2.0.1
+torchaudio==2.0.2
+ctranslate2==3.24.0
+transformers<4.42
 
 # Voice Activity Detection
 silero-vad>=4.0.0

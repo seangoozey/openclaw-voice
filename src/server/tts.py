@@ -44,7 +44,12 @@ class ChatterboxTTS:
             or os.environ.get("OPENCLAW_TTS_API_KEY")
             or os.environ.get("OPENAI_API_KEY")
         )
-        self._tts_base_url = (base_url or os.environ.get("OPENCLAW_TTS_BASE_URL") or "").rstrip("/")
+        self._tts_base_url = (
+            base_url
+            or os.environ.get("OPENCLAW_TTS_API_BASE_URL")
+            or os.environ.get("OPENCLAW_TTS_BASE_URL")
+            or ""
+        ).rstrip("/")
         self._tts_model = model or os.environ.get("OPENCLAW_TTS_API_MODEL") or "gpt-4o-mini-tts"
         self._tts_voice = voice or os.environ.get("OPENCLAW_TTS_API_VOICE") or "alloy"
         self._tts_response_format = (
@@ -135,19 +140,7 @@ class ChatterboxTTS:
             logger.info("ElevenLabs TTS ready")
             return True
         except ImportError:
-            logger.warning("ElevenLabs SDK not installed, trying pip install...")
-            try:
-                import subprocess
-
-                subprocess.check_call(["pip", "install", "elevenlabs", "-q"])
-                from elevenlabs import ElevenLabs
-
-                self._elevenlabs_client = ElevenLabs(api_key=elevenlabs_key)
-                self._backend = "elevenlabs"
-                logger.info("ElevenLabs TTS ready (auto-installed)")
-                return True
-            except Exception as e:
-                logger.warning(f"ElevenLabs auto-install failed: {e}")
+            logger.warning("ElevenLabs SDK not installed")
         except Exception as e:
             logger.warning(f"ElevenLabs failed: {e}")
 

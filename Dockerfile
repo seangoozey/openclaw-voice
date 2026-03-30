@@ -1,14 +1,7 @@
-# OpenClaw Voice - GPU-enabled Docker image
-# Supports NVIDIA GPUs for fast Whisper + TTS inference
+# OpenClaw Voice - P40-targeted GPU-enabled Docker image
+# Uses a CUDA 11.8 / Pascal-friendly dependency stack.
 
-ARG CUDA_BASE_IMAGE=nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
-FROM ${CUDA_BASE_IMAGE}
-
-ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu121
-ARG TORCH_VERSION=
-ARG TORCHAUDIO_VERSION=
-ARG FASTER_WHISPER_VERSION=
-ARG CTRANSLATE2_VERSION=
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -54,13 +47,13 @@ COPY requirements.txt pyproject.toml README.md constraints.txt ./
 RUN uv venv && \
     . .venv/bin/activate && \
     uv pip install -c constraints.txt -r requirements.txt && \
-    if [ -n "${TORCH_VERSION}" ] && [ -n "${TORCHAUDIO_VERSION}" ]; then \
-        uv pip install -c constraints.txt --upgrade "torch==${TORCH_VERSION}" "torchaudio==${TORCHAUDIO_VERSION}" --index-url ${TORCH_INDEX_URL}; \
-    else \
-        uv pip install -c constraints.txt --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
-    fi && \
-    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
-    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
+    uv pip install -c constraints.txt --upgrade \
+        "torch==2.0.1" \
+        "torchaudio==2.0.2" \
+        --index-url https://download.pytorch.org/whl/cu118 && \
+    uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps \
+        "faster-whisper==0.10.0" \
+        "ctranslate2==3.24.0" && \
     uv pip install --upgrade "numpy<2"
 
 # Copy application code
