@@ -60,7 +60,8 @@ RUN uv venv && \
         uv pip install --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
     fi && \
     if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
-    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi
+    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
+    uv pip install --upgrade "numpy<2"
 
 # Copy application code
 COPY src/ ./src/
