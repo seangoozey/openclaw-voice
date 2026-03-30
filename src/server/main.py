@@ -28,7 +28,7 @@ from .tts import ChatterboxTTS
 from .backend import AIBackend
 from .vad import VoiceActivityDetector
 from .auth import token_manager, load_keys_from_env, APIKey
-from .text_utils import clean_for_speech
+from .text_utils import clean_for_speech, strip_control_tags
 
 
 class Settings(BaseSettings):
@@ -310,12 +310,14 @@ async def websocket_endpoint(websocket: WebSocket):
                         async for chunk in backend.chat_stream(transcript):
                             full_response += chunk
                             sentence_buffer += chunk
+                            visible_chunk = strip_control_tags(chunk)
                             
                             # Send text chunk for progressive display
-                            await websocket.send_json({
-                                "type": "response_chunk",
-                                "text": chunk,
-                            })
+                            if visible_chunk:
+                                await websocket.send_json({
+                                    "type": "response_chunk",
+                                    "text": visible_chunk,
+                                })
                             
                             # Check for sentence boundaries
                             while any(sep in sentence_buffer for sep in ['. ', '! ', '? ', '.\n', '!\n', '?\n']):
@@ -360,7 +362,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         # Signal end of response
                         await websocket.send_json({
                             "type": "response_complete",
-                            "text": full_response,
+                            "text": strip_control_tags(full_response),
                         })
                         logger.info(f"Response complete: {full_response[:100]}...")
                 

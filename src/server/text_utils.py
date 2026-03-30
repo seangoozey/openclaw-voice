@@ -8,6 +8,14 @@ while preserving original for display.
 import re
 
 
+def strip_control_tags(text: str) -> str:
+    """Remove OpenClaw-style control tags like [[tts:friendly]]."""
+    if not text:
+        return text
+
+    return re.sub(r"\[\[[^\]]+\]\]\s*", "", text)
+
+
 def clean_for_speech(text: str) -> str:
     """
     Clean text for TTS rendering.
@@ -25,6 +33,8 @@ def clean_for_speech(text: str) -> str:
     """
     if not text:
         return text
+
+    text = strip_control_tags(text)
     
     # Remove code blocks first (``` ... ```)
     text = re.sub(r'```[\s\S]*?```', ' code block omitted ', text)
