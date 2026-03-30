@@ -46,21 +46,21 @@ WORKDIR /app
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 # Copy dependency manifests first for caching
-COPY requirements.txt pyproject.toml README.md ./
+COPY requirements.txt pyproject.toml README.md constraints.txt ./
 
 # Create venv and install dependencies.
 # Use requirements.txt here instead of editable package install because the repo
 # is not packaged as a standard installable src-layout project.
 RUN uv venv && \
     . .venv/bin/activate && \
-    uv pip install -r requirements.txt && \
+    uv pip install -c constraints.txt -r requirements.txt && \
     if [ -n "${TORCH_VERSION}" ] && [ -n "${TORCHAUDIO_VERSION}" ]; then \
-        uv pip install --upgrade "torch==${TORCH_VERSION}" "torchaudio==${TORCHAUDIO_VERSION}" --index-url ${TORCH_INDEX_URL}; \
+        uv pip install -c constraints.txt --upgrade "torch==${TORCH_VERSION}" "torchaudio==${TORCHAUDIO_VERSION}" --index-url ${TORCH_INDEX_URL}; \
     else \
-        uv pip install --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
+        uv pip install -c constraints.txt --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
     fi && \
-    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
-    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
+    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install -c constraints.txt --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
+    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install -c constraints.txt --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
     uv pip install --upgrade "numpy<2"
 
 # Copy application code
