@@ -9,9 +9,9 @@ ENV PYTHONUNBUFFERED=1
 
 # Install Python and dependencies
 RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-dev \
-    python3.11-venv \
+    python3.10 \
+    python3.10-dev \
+    python3.10-venv \
     python3-pip \
     build-essential \
     pkg-config \
@@ -28,9 +28,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+# Set Python 3.10 as default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 # Create app directory
 WORKDIR /app
