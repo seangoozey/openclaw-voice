@@ -372,16 +372,29 @@
         let currentResponseElement = null;
         let streamingText = '';
         let pendingPcmBytes = new Uint8Array(0);
+        let responseStreamComplete = true;
+        let turnHasTranscript = false;
+        let turnHasResponse = false;
+        let continuousRestartTimer = null;
         
         function handleMessage(msg) {
             switch (msg.type) {
                 case 'listening_started':
+                    responseStreamComplete = false;
+                    turnHasTranscript = false;
+                    turnHasResponse = false;
                     setStatus(continuousMode ? '🎙️ Listening (continuous)...' : 'Listening...', true);
                     break;
                 case 'listening_stopped':
-                    setStatus('Processing...');
+                    if (turnHasTranscript) {
+                        setStatus('Processing...');
+                    } else {
+                        setStatus(continuousMode ? 'Waiting for speech...' : 'Ready');
+                        maybeResumeContinuousMode();
+                    }
                     break;
                 case 'transcript':
+                    turnHasTranscript = msg.text.trim().length > 0;
                     addTranscript('You', msg.text, 'user');
                     setStatus('Getting response...');
                     // Reset streaming state
@@ -391,26 +404,34 @@
                     pendingPcmBytes = new Uint8Array(0);
                     break;
                 case 'response_text':
+                    turnHasResponse = true;
                     // Legacy non-streaming response
                     addTranscript('AI', msg.text, 'assistant');
                     break;
                 case 'response_chunk':
+                    turnHasResponse = true;
                     // Streaming text chunk
                     streamingText += msg.text;
                     updateStreamingTranscript(streamingText);
                     setStatus('Speaking...', true);
                     break;
                 case 'audio_chunk':
+                    turnHasResponse = true;
                     // Queue audio chunk for playback
                     queueAudioChunk(msg.data, msg.sample_rate);
                     break;
                 case 'response_complete':
+                    responseStreamComplete = true;
+                    turnHasResponse = true;
                     // Finalize the response
                     if (currentResponseElement) {
                         currentResponseElement.innerHTML = `<strong>AI:</strong> ${renderMarkdown(msg.text)}`;
                     }
+                    maybeResumeContinuousMode();
                     break;
                 case 'audio_response':
+                    responseStreamComplete = true;
+                    turnHasResponse = true;
                     // Legacy non-streaming audio
                     playAudioWithCallback(msg.data, msg.sample_rate, onAudioComplete);
                     setStatus('Speaking...');
@@ -465,7 +486,7 @@
         async function playNextInQueue() {
             if (audioQueue.length === 0) {
                 isPlayingQueue = false;
-                onAudioComplete();
+                maybeResumeContinuousMode();
                 return;
             }
             
@@ -493,13 +514,36 @@
         }
         
         function onAudioComplete() {
+            if (continuousRestartTimer) {
+                clearTimeout(continuousRestartTimer);
+                continuousRestartTimer = null;
+            }
             if (continuousMode) {
                 setStatus('🎙️ Ready to listen...', true);
-                setTimeout(() => {
+                continuousRestartTimer = setTimeout(() => {
                     if (continuousMode) startRecording();
                 }, 300);
             } else {
                 setStatus('Ready');
+            }
+        }
+        
+        function maybeResumeContinuousMode() {
+            if (!continuousMode || isRecording || isPlayingQueue || audioQueue.length > 0) {
+                return;
+            }
+
+            if (!responseStreamComplete) {
+                return;
+            }
+
+            if (!turnHasTranscript) {
+                onAudioComplete();
+                return;
+            }
+
+            if (turnHasResponse) {
+                onAudioComplete();
             }
         }
         
@@ -546,6 +590,10 @@
         // Audio recording
         async function startRecording() {
             if (isRecording) return;
+            if (continuousRestartTimer) {
+                clearTimeout(continuousRestartTimer);
+                continuousRestartTimer = null;
+            }
             
             try {
                 // Reuse stream if available, otherwise get new one
