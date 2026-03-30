@@ -46,7 +46,8 @@ class VoiceActivityDetector:
             elif len(audio) > window_samples:
                 audio = audio[-window_samples:]
 
-            audio_tensor = torch.from_numpy(audio).float().unsqueeze(0)
+            audio = np.array(audio, dtype=np.float32, copy=True)
+            audio_tensor = torch.from_numpy(audio).unsqueeze(0)
             speech_prob = self.model(audio_tensor, sample_rate).item()
             return speech_prob > self.threshold
         except Exception as e:
