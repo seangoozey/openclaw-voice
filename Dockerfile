@@ -59,8 +59,8 @@ RUN uv venv && \
     else \
         uv pip install -c constraints.txt --upgrade torch torchaudio --index-url ${TORCH_INDEX_URL}; \
     fi && \
-    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install -c constraints.txt --upgrade "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
-    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install -c constraints.txt --upgrade "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
+    if [ -n "${FASTER_WHISPER_VERSION}" ]; then uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps "faster-whisper==${FASTER_WHISPER_VERSION}"; fi && \
+    if [ -n "${CTRANSLATE2_VERSION}" ]; then uv pip install -c constraints.txt --upgrade --force-reinstall --no-deps "ctranslate2==${CTRANSLATE2_VERSION}"; fi && \
     uv pip install --upgrade "numpy<2"
 
 # Copy application code
